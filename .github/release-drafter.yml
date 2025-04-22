@@ -1,9 +1,22 @@
-change-template: '* $TITLE (#$NUMBER) by @$AUTHOR'
+name-template:  'v$RESOLVED_VERSION'
+tag-template:   'v$RESOLVED_VERSION'
+
+version-resolver:
+  major:
+    labels: [ breaking ]
+  minor:
+    labels: [ feature, enhancement ]
+  patch:
+    labels: [ fix, bug ]
+  default: patch
+
+change-template: '- $TITLE (#$NUMBER) by @$AUTHOR'
 change-title-escapes: '\<*_&#@`'
 exclude-labels:
-  - 'chore'
-  - 'documentation'
-  - 'help'
+  - chore
+  - documentation
+  - help
+
 template: |
   ## Changes
   $CHANGES
