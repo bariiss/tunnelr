@@ -51,7 +51,6 @@ func RegisterHandler(reg *Registry, baseDomain string) http.HandlerFunc {
 				case <-r.Context().Done():
 					return
 				case <-tick.C:
-					// Ping ve 5 sn timeout
 					ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 					err := conn.Ping(ctx)
 					cancel()
