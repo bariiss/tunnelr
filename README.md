@@ -1,6 +1,6 @@
 # TunnelR
 
-<p align="center">A lightweight, self-hosted HTTP tunneling service written in Go</p>
+<p align="center">A lightweight, self-hosted HTTP tunneling service to expose local servers via custom subdomains with secure WebSocket transport</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/go-%231.24.2-blue" alt="Go version">
