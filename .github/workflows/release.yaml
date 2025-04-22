@@ -1,0 +1,106 @@
+name: Release Drafter
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  GO_VERSION: 1.24.2
+
+jobs:
+  draft_release:
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: read_version
+        run: echo "version=$(cat version/VERSION | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Print version
+        run: |
+          echo "Version: ${{ steps.read_version.outputs.version }}"
+
+      - uses: release-drafter/release-drafter@v6
+        id: release
+        with:
+          version: ${{ steps.read_version.outputs.version }}
+          name: v${{ steps.read_version.outputs.version }}
+          tag: v${{ steps.read_version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_and_publish:
+    needs: draft_release
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG_NAME: ${{ needs.draft_release.outputs.tag_name }}
+      CGO_ENABLED: 0
+
+    strategy:
+      matrix:
+        include:
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm
+          - goos: linux
+            goarch: arm64
+          - goos: linux
+            goarch: mips
+          - goos: linux
+            goarch: mipsle
+          - goos: linux
+            goarch: mips64
+          - goos: linux
+            goarch: mips64le
+          - goos: linux
+            goarch: ppc64le
+          - goos: linux
+            goarch: riscv64
+          - goos: linux
+            goarch: s390x
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Display Go version
+        run: go version
+
+      - name: Build binary and checksums
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          OUTPUT_NAME="tunnelr-${GOOS}-${GOARCH}"
+          if [ "$GOOS" = "windows" ]; then
+            BINARY_NAME="${OUTPUT_NAME}.exe"
+            go build -ldflags="-w -s" -o "${BINARY_NAME}" ./cmd/server
+            sha256sum "${BINARY_NAME}" > "${BINARY_NAME}.sha256"
+            gh release upload "$TAG_NAME" "${BINARY_NAME}" "${BINARY_NAME}.sha256"
+          else
+            BINARY_NAME="${OUTPUT_NAME}.tar.gz"
+            go build -ldflags="-w -s" -o tunnelr ./cmd/server
+            tar -zcvf "${BINARY_NAME}" tunnelr
+            sha256sum "${BINARY_NAME}" > "${BINARY_NAME}.sha256"
+            gh release upload "$TAG_NAME" "${BINARY_NAME}" "${BINARY_NAME}.sha256"
+          fi
