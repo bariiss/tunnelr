@@ -76,6 +76,7 @@ jobs:
           GOOS:   ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           TAG:    ${{ needs.draft_release.outputs.tag_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           OUT="tunnelr-${GOOS}-${GOARCH}"
@@ -90,5 +91,3 @@ jobs:
             sha256sum "${OUT}.tar.gz" >"${OUT}.tar.gz.sha256"
             gh release upload "$TAG" "${OUT}.tar.gz" "${OUT}.tar.gz.sha256" --clobber
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
