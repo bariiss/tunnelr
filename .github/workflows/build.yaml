@@ -59,9 +59,9 @@ jobs:
           BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
           if [ -f VERSION ]; then
-            VERSION=$(cat VERSION | tr -d '[:space:]')
+            VERSION=v$(cat VERSION | tr -d '[:space:]')
           elif [ -f version/VERSION ]; then
-            VERSION=$(cat version/VERSION | tr -d '[:space:]')
+            VERSION=v$(cat version/VERSION | tr -d '[:space:]')
           else
             echo "❌ VERSION file not found!" >&2
             exit 1
