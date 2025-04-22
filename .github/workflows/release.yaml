@@ -94,12 +94,12 @@ jobs:
           OUTPUT_NAME="tunnelr-${GOOS}-${GOARCH}"
           if [ "$GOOS" = "windows" ]; then
             BINARY_NAME="${OUTPUT_NAME}.exe"
-            go build -ldflags="-w -s" -o "${BINARY_NAME}" ./cmd/server
+            go build -ldflags="-w -s" -o "${BINARY_NAME}" ./cmd/client/tunnelr
             sha256sum "${BINARY_NAME}" > "${BINARY_NAME}.sha256"
             gh release upload "$TAG_NAME" "${BINARY_NAME}" "${BINARY_NAME}.sha256"
           else
             BINARY_NAME="${OUTPUT_NAME}.tar.gz"
-            go build -ldflags="-w -s" -o tunnelr ./cmd/server
+            go build -ldflags="-w -s" -o tunnelr ./cmd/client/tunnelr
             tar -zcvf "${BINARY_NAME}" tunnelr
             sha256sum "${BINARY_NAME}" > "${BINARY_NAME}.sha256"
             gh release upload "$TAG_NAME" "${BINARY_NAME}" "${BINARY_NAME}.sha256"
