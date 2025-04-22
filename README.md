@@ -79,36 +79,61 @@ TunnelR uses a client-server architecture:
 
 ## Docker Deployment
 
-TunnelR is designed to work with Traefik for easy deployment with automatic HTTPS:
+TunnelR is designed to work with Traefik for easy deployment with automatic HTTPS. The included `docker-compose.yml` provides a complete setup:
 
 ```yaml
-# Example docker-compose.yml snippet
 services:
+  traefik:
+    # Traefik configuration for SSL/TLS termination
+    # ...
+  
   tunnelr:
     image: ghcr.io/bariiss/tunnelr:latest
     environment:
       - BASE_DOMAIN=link.il1.nl
-    # ... additional configuration
+    # Labels for Traefik integration
 ```
+
+To use the provided setup:
+
+1. Create a network for Traefik: `docker network create traefik_proxy`
+2. Update the Cloudflare API token and email in `docker-compose.yml`
+3. Run `docker compose up -d`
 
 ## DNS Configuration
 
-For TunnelR to work properly, you'll need to configure your DNS settings. In my setup, I've added the following records to Cloudflare:
+For TunnelR to work properly, you'll need to configure your DNS settings with Cloudflare:
 
-- An A record for `link.il1.nl` pointing to my server's IP address
-- A wildcard A record for `*.link.il1.nl` also pointing to the same server IP address
+1. Add an A record for `link.il1.nl` pointing to your server's IP address
+2. Add a wildcard A record for `*.link.il1.nl` also pointing to the same server IP address
 
-This configuration allows the base domain and all subdomains to resolve to your TunnelR server.
+### Setting Up Cloudflare API Token
+
+For automated SSL certificate management, you'll need a Cloudflare API token:
+
+1. Log in to your Cloudflare account
+2. Navigate to "My Profile" > "API Tokens"
+3. Click "Create Token"
+4. Either:
+   - Use the "Edit zone DNS" template and select your specific zone, or
+   - Create a custom token with the following permissions:
+     - Zone > DNS > Edit
+     - Zone > Zone > Read
+5. Restrict the token to the specific zone (domain) you're using
+6. After creating the token, copy it and replace `<YOUR_CLOUDFLARE_API_TOKEN>` in your `docker-compose.yml`
+7. Also replace `<YOUR_EMAIL>` with the email associated with your Cloudflare account
+
+This token allows Traefik to automatically verify domain ownership by creating temporary DNS records when requesting Let's Encrypt certificates.
 
 ## Customizing for Your Own Domain
 
 The code and Docker Compose configuration are designed to be easily adaptable for your own domain:
 
-1. Replace all instances of `link.il1.nl` with your own domain in the code and configuration files
+1. Replace all instances of `link.il1.nl` with your own domain in the `docker-compose.yml` file
 2. Update your DNS provider with appropriate A records for your domain and wildcard subdomains
-3. Configure Traefik (included in the Docker Compose setup) to obtain and manage SSL certificates for your domain
+3. Update the Cloudflare API token and email in the configuration
 
-The included Traefik configuration automatically handles SSL certificate issuance and renewal through Let's Encrypt.
+The included Traefik configuration automatically handles SSL certificate issuance and renewal through Let's Encrypt using Cloudflare DNS challenge for verification.
 
 ## License
 
