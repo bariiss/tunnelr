@@ -49,18 +49,30 @@ jobs:
           password: ${{ secrets.MY_PAT_TOKEN }}
 
       # Step 5: Set dynamic version from date and image name
-      - name: Set version and image name
+      - name: Prepare metadata
         id: meta
         run: |
-          VERSION="v$(date -u +'%Y.%m.%d.%H.%M')"
-          BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          set -euo pipefail
+
           IMAGE_NAME="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
-          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+
+          BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          if [ -f VERSION ]; then
+            VERSION=$(cat VERSION | tr -d '[:space:]')
+          elif [ -f version/VERSION ]; then
+            VERSION=$(cat version/VERSION | tr -d '[:space:]')
+          else
+            echo "❌ VERSION file not found!" >&2
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build_date=$BUILD_DATE" >> "$GITHUB_OUTPUT"
+          echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
 
       # Step 6: Build and Push Multi-Architecture Docker Image
-      - name: Build and Push Multi-Arch Docker Image
+      - name: Build and Push Multi‑Arch Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
