@@ -1,0 +1,53 @@
+# --- Stage 1: build ----------------------------------------------------------
+FROM golang:1.24.2@sha256:d9db32125db0c3a680cfb7a1afcaefb89c898a075ec148fdc2f0f646cc2ed509 AS builder
+
+    ARG TARGETOS
+    ARG TARGETARCH
+    ARG VERSION
+    ARG BUILD_DATE
+    ARG GITHUB_SHA
+    ARG GITHUB_REPOSITORY
+    
+    WORKDIR /app
+    
+    # download modules early for better cache hits
+    COPY go.mod go.sum ./
+    RUN go mod download
+    
+    # copy the entire source tree
+    COPY . .
+    
+    # build the statically‑linked binary for the requested platform
+    RUN CGO_ENABLED=0 \
+        GOOS=${TARGETOS} \
+        GOARCH=${TARGETARCH} \
+        go build -ldflags="-s -w" -o tunnelr-server ./cmd/server
+    
+    # --- Stage 2: final image ----------------------------------------------------
+    FROM scratch
+    
+    ARG VERSION
+    ARG BUILD_DATE
+    ARG GITHUB_SHA
+    ARG GITHUB_REPOSITORY
+    
+    LABEL org.opencontainers.image.title="tunnelr-server" \
+          org.opencontainers.image.description="Tunnelr Server" \
+          org.opencontainers.image.version="${VERSION}" \
+          org.opencontainers.image.url="https://github.com/${GITHUB_REPOSITORY}" \
+          org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" \
+          org.opencontainers.image.created="${BUILD_DATE}" \
+          org.opencontainers.image.revision="${GITHUB_SHA}" \
+          org.opencontainers.image.licenses="MIT"
+    
+    WORKDIR /app
+    
+    # trusted CA bundle for HTTPS egress (let's encrypt, etc.)
+    COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+    
+    # copy the compiled binary
+    COPY --from=builder /app/tunnelr-server .
+    
+    EXPOSE 8080
+    
+    ENTRYPOINT ["./tunnelr-server"]
