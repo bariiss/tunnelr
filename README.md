@@ -36,10 +36,10 @@ go build -o tunnelr-server ./cmd/server
 
 ```bash
 # Using the pre-built client
-go run ./cmd/client -port 8080 -server wss://link.il1.nl/register
+go run ./cmd/client/tunnelr -port 8080 -server wss://link.il1.nl/register
 
 # With a custom subdomain
-go run ./cmd/client -port 8080 -server wss://link.il1.nl/register -sub myapp
+go run ./cmd/client/tunnelr -port 8080 -server wss://link.il1.nl/register -sub myapp
 ```
 
 Your local server will be accessible at `https://<subdomain>.link.il1.nl` where `<subdomain>` is either your chosen subdomain or a randomly assigned one.
