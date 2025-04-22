@@ -91,6 +91,25 @@ services:
     # ... additional configuration
 ```
 
+## DNS Configuration
+
+For TunnelR to work properly, you'll need to configure your DNS settings. In my setup, I've added the following records to Cloudflare:
+
+- An A record for `link.il1.nl` pointing to my server's IP address
+- A wildcard A record for `*.link.il1.nl` also pointing to the same server IP address
+
+This configuration allows the base domain and all subdomains to resolve to your TunnelR server.
+
+## Customizing for Your Own Domain
+
+The code and Docker Compose configuration are designed to be easily adaptable for your own domain:
+
+1. Replace all instances of `link.il1.nl` with your own domain in the code and configuration files
+2. Update your DNS provider with appropriate A records for your domain and wildcard subdomains
+3. Configure Traefik (included in the Docker Compose setup) to obtain and manage SSL certificates for your domain
+
+The included Traefik configuration automatically handles SSL certificate issuance and renewal through Let's Encrypt.
+
 ## License
 
 MIT License
