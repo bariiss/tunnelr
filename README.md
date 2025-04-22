@@ -107,6 +107,8 @@ For TunnelR to work properly, you'll need to configure your DNS settings with Cl
 1. Add an A record for `link.il1.nl` pointing to your server's IP address
 2. Add a wildcard A record for `*.link.il1.nl` also pointing to the same server IP address
 
+> **Important**: Your domain must be managed through Cloudflare to use this setup. The DNS-01 challenge method used for obtaining wildcard SSL certificates requires DNS provider API access, which this configuration implements using Cloudflare. Without Cloudflare DNS management, you won't be able to automatically obtain wildcard certificates with Let's Encrypt.
+
 ### Setting Up Cloudflare API Token
 
 For automated SSL certificate management, you'll need a Cloudflare API token:
