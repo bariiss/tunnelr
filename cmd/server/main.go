@@ -8,6 +8,7 @@ import (
 	"github.com/bariiss/tunnelr/internal/server"
 )
 
+// main is the entry point for the tunnelr server, which handles WebSocket connections and proxies HTTP requests
 func main() {
 	baseDomain := os.Getenv("BASE_DOMAIN")
 	if baseDomain == "" {

@@ -19,6 +19,7 @@ type Forwarder struct {
 	httpClient *http.Client
 }
 
+// NewForwarder creates a new forwarder instance that handles WebSocket communication with the tunnel server
 func NewForwarder(c *websocket.Conn, localAddr string) *Forwarder {
 	return &Forwarder{
 		conn:      c,
@@ -29,6 +30,7 @@ func NewForwarder(c *websocket.Conn, localAddr string) *Forwarder {
 	}
 }
 
+// Serve starts the forwarding service, continuously reading WebSocket messages from the server
 func (f *Forwarder) Serve(ctx context.Context) error {
 	for {
 		_, data, err := f.conn.Read(ctx)
@@ -39,6 +41,7 @@ func (f *Forwarder) Serve(ctx context.Context) error {
 	}
 }
 
+// handleFrame processes an incoming WebSocket frame, forwards the request to the local server, and returns the response
 func (f *Forwarder) handleFrame(ctx context.Context, data []byte) {
 	var req common.RequestFrame
 	if err := json.Unmarshal(data, &req); err != nil {

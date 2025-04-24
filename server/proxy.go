@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// ProxyHandler creates an HTTP handler that proxies incoming requests through the WebSocket tunnel to the client
 func ProxyHandler(reg *Registry) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host

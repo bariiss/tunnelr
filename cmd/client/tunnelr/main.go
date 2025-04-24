@@ -14,6 +14,7 @@ import (
 	"github.com/coder/websocket"
 )
 
+// main is the entry point for the tunnelr client, which establishes a WebSocket connection to the server and forwards local traffic
 func main() {
 	port := flag.Int("port", 8080, "local port to expose")
 	serverURL := flag.String("server", "wss://link.il1.nl/register", "tunnel server URL")

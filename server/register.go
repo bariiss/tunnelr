@@ -18,6 +18,7 @@ func randomString() string {
 	return fmt.Sprintf("%x", b)
 }
 
+// RegisterHandler creates an HTTP handler for registering new tunnel connections with WebSocket upgrades
 func RegisterHandler(reg *Registry, baseDomain string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Upgrade to websocket
