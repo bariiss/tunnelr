@@ -2,11 +2,11 @@ package server
 
 import (
 	"crypto/rand"
-	"encoding/hex"
+	"fmt"
 	"log"
 	"net/http"
 
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 // randomString creates 6 random bytes hex‑encoded (12 chars)
@@ -15,7 +15,7 @@ func randomString() string {
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-	return hex.EncodeToString(b)
+	return fmt.Sprintf("%x", b)
 }
 
 func RegisterHandler(reg *Registry, baseDomain string) http.HandlerFunc {

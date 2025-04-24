@@ -1,39 +1,39 @@
 package server
 
 import (
-    "sync"
+	"sync"
 
-    "nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 type ConnEntry struct {
-    Conn *websocket.Conn
+	Conn *websocket.Conn
 }
 
 type Registry struct {
-    mu   sync.RWMutex
-    conns map[string]*ConnEntry
+	mu    sync.RWMutex
+	conns map[string]*ConnEntry
 }
 
 func NewRegistry() *Registry {
-    return &Registry{conns: make(map[string]*ConnEntry)}
+	return &Registry{conns: make(map[string]*ConnEntry)}
 }
 
 func (r *Registry) Put(sub string, c *ConnEntry) {
-    r.mu.Lock()
-    defer r.mu.Unlock()
-    r.conns[sub] = c
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.conns[sub] = c
 }
 
 func (r *Registry) Get(sub string) (*ConnEntry, bool) {
-    r.mu.RLock()
-    defer r.mu.RUnlock()
-    c, ok := r.conns[sub]
-    return c, ok
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	c, ok := r.conns[sub]
+	return c, ok
 }
 
 func (r *Registry) Delete(sub string) {
-    r.mu.Lock()
-    defer r.mu.Unlock()
-    delete(r.conns, sub)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.conns, sub)
 }

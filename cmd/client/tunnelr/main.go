@@ -11,7 +11,7 @@ import (
 	"syscall"
 
 	"github.com/bariiss/tunnelr/internal/client"
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 func main() {
