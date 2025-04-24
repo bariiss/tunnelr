@@ -31,7 +31,12 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	conn, _, err := websocket.Dial(ctx, u.String(), nil)
+	// Use explicit options with compression disabled to prevent RSV bit issues
+	dialOptions := &websocket.DialOptions{
+		CompressionMode: websocket.CompressionDisabled,
+	}
+
+	conn, _, err := websocket.Dial(ctx, u.String(), dialOptions)
 	if err != nil {
 		log.Fatalf("dial: %v", err)
 	}

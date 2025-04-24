@@ -22,7 +22,8 @@ func RegisterHandler(reg *Registry, baseDomain string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Upgrade to websocket
 		c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-			InsecureSkipVerify: true, // demo only; use proper TLS auth
+			InsecureSkipVerify: true,                          // demo only; use proper TLS auth
+			CompressionMode:    websocket.CompressionDisabled, // Disable compression to prevent RSV bit issues
 		})
 		if err != nil {
 			log.Println("ws upgrade:", err)

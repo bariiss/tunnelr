@@ -29,7 +29,8 @@ func randomString(n int) string {
 func RegisterHandler(reg *Registry, baseDomain string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-			InsecureSkipVerify: true, // remove once you add real TLS auth
+			InsecureSkipVerify: true,                          // remove once you add real TLS auth
+			CompressionMode:    websocket.CompressionDisabled, // Disable compression to prevent RSV bit issues
 		})
 		if err != nil {
 			log.Println("ws upgrade:", err)
