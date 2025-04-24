@@ -70,5 +70,8 @@ func (f *Forwarder) handleFrame(ctx context.Context, data []byte) {
 	}
 
 	bytesData, _ := json.Marshal(respFrame)
-	f.conn.Write(ctx, websocket.MessageText, bytesData)
+	err = f.conn.Write(ctx, websocket.MessageText, bytesData)
+	if err != nil {
+		log.Println("write response error:", err)
+	}
 }
