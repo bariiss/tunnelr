@@ -235,6 +235,7 @@ services:
 networks:
   traefik_proxy:
     name: traefik_proxy
+    external: true
 
 secrets:
   cf_token:
