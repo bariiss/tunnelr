@@ -12,10 +12,37 @@ version-resolver:
 
 change-template: '- $TITLE (#$NUMBER) by @$AUTHOR'
 change-title-escapes: '\<*_&#@`'
+
 exclude-labels:
   - chore
   - documentation
   - help
+
+categories:
+  - title: '💥 Breaking'
+    labels: [ breaking ]
+  - title: '🚀 Features'
+    labels: [ feature, enhancement ]
+  - title: '🐛 Fixes'
+    labels: [ fix, bug ]
+  - title: '🧰 Maintenance'
+    labels: [ chore ]
+
+autolabeler:
+  - label: documentation
+    files:
+      - '**/*.md'
+    events:
+      - pull_request.opened
+      - pull_request.reopened
+      - pull_request.synchronize
+
+  - label: breaking
+    title:
+      - '/BREAKING CHANGE:/i'
+    events:
+      - pull_request.opened
+      - pull_request.edited
 
 template: |
   ## Changes
