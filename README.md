@@ -21,6 +21,7 @@ TunnelR creates a secure tunnel to expose your local web servers to the internet
 - 🐳 **Docker Ready**: Easy deployment with Docker and Traefik integration
 - 🔑 **Automatic SSL Certificates**: Wildcard certificates managed through Let's Encrypt
 - 🌍 **Multi-Architecture Support**: ARM64 and AMD64 builds available
+- 💾 **Configuration Persistence**: Save your settings in a local config file
 
 ## Quick Start
 
@@ -38,14 +39,20 @@ go build -o tunnelr-server ./cmd/server
 ### Connecting a Client
 
 ```bash
-# Using the pre-built client
-go run ./cmd/client/tunnelr -port 8080 -server wss://<DOMAIN>/register
+# Using the pre-built client with default settings
+tunnelr
 
-# With a custom subdomain
-go run ./cmd/client/tunnelr -port 8080 -server wss://<DOMAIN>/register -sub myapp
+# With a custom subdomain (as positional argument)
+tunnelr myapp
 
-# Download and use a pre-built binary from the releases page
-./tunnelr-darwin-arm64 -port 3000 -server wss://<DOMAIN>/register -sub myapp
+# Specify a different local port
+tunnelr -p 3000 myapp
+
+# Forward to a different local address
+tunnelr -t 192.168.1.100 -p 3000 myapp
+
+# Specify a different tunnel server domain
+tunnelr -d custom.domain.com myapp
 ```
 
 Your local server will be accessible at `https://<subdomain>.<DOMAIN>` where `<subdomain>` is either your chosen subdomain or a randomly assigned one.
@@ -103,14 +110,34 @@ TunnelR uses a simple JSON-based message protocol for communication between the 
 | `DOMAIN` | Base domain for tunnel URLs | Your configured domain |
 | `SERVER_PORT` | Port to listen on | `8095` |
 
-### Client Arguments
+### Client Configuration
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `-port` | Local port to forward traffic to | `8080` |
-| `-server` | Tunnel server WebSocket URL | `wss://<DOMAIN>/register` |
-| `-sub` | Custom subdomain (optional) | Random string |
-| `-target` | Local host to forward to | `127.0.0.1` |
+TunnelR client configuration is saved to `~/.config/tunnelr/config.yaml` and can be overridden with command-line flags.
+
+#### Command-Line Arguments
+
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--config` | - | Config file path | `~/.config/tunnelr/config.yaml` |
+| `--domain` | `-d` | Tunnel server domain | `<DOMAIN>` (or saved value) |
+| `--port` | `-p` | Local port to forward traffic to | `8080` |
+| `--target` | `-t` | Local host to forward to | `127.0.0.1` |
+
+#### Positional Argument
+
+The first positional argument is treated as the requested subdomain (optional). If not provided, a random subdomain will be assigned.
+
+```bash
+tunnelr [flags] [subdomain]
+```
+
+#### Configuration File
+
+The client saves your domain preference to the config file. Example `config.yaml`:
+
+```yaml
+domain: your.domain.com
+```
 
 ## Docker Deployment
 
@@ -120,21 +147,18 @@ TunnelR is designed to work with Traefik for easy deployment with automatic HTTP
 services:
   traefik:
     image: traefik:v2.11
+    # SSL/TLS termination and routing configuration
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./letsencrypt:/letsencrypt
-    env_file: .env
     environment:
-      - CF_EMAIL
-      - CF_DNS_API_TOKEN
-      - DOMAIN
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
   
   tunnelr-server:
     image: ghcr.io/bariiss/tunnelr-server:latest
-    env_file: .env
     environment:
-      - SERVER_PORT
-      - DOMAIN
+      - DOMAIN=<DOMAIN>
+      - SERVER_PORT=8095
     # Traefik labels for routing
 ```
 
@@ -143,10 +167,10 @@ To use the provided setup:
 1. Create a network for Traefik: `docker network create traefik_proxy`
 2. Create a `.env` file with your Cloudflare credentials:
    ```
-    CF_EMAIL=me@example.com
-    CF_DNS_API_TOKEN=abcdef0123456789abcdef0123456789
-    DOMAIN=example.com
-    SERVER_PORT=8095
+   CF_DNS_API_TOKEN=your_cloudflare_api_token
+   DOMAIN=your.domain.com
+   EMAIL=your@email.com
+   SERVER_PORT=8095
    ```
 3. Run `docker compose up -d`
 
@@ -181,6 +205,10 @@ The code and Docker Compose configuration are designed to be easily adaptable fo
 1. Replace `<DOMAIN>` with your own domain in the `.env` file
 2. Update your DNS provider with appropriate A records for your domain and wildcard subdomains
 3. Update the Cloudflare API token and email in the `.env` file
+4. Update client configuration:
+   ```bash
+   tunnelr -d your.domain.com
+   ```
 
 ## Available Client Binaries
 

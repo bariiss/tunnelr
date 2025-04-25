@@ -30,6 +30,7 @@ var rootCmd = &cobra.Command{
 	RunE:  run,
 }
 
+// Execute adds all child commands to the root command and sets flags appropriately.
 func init() {
 	home, _ := os.UserHomeDir()
 	defCfg := filepath.Join(home, ".config", "tunnelr", "config.yaml")
@@ -42,23 +43,27 @@ func init() {
 	cobra.OnInitialize(initConfig)
 }
 
+// initConfig loads domain from flag, env or config file
 func initConfig() {
 	viper.SetConfigFile(cfgFile)
 
-	// Default values
-	viper.SetDefault("domain", "link.il1.nl")
+	// ENV değişkenlerini içe aktar – örn. TUNNELR_DOMAIN
+	viper.SetEnvPrefix("tunnelr")
+	viper.AutomaticEnv()
+	_ = viper.BindEnv("domain")
 
-	// Read if exists (ignore error for first run)
+	// Varsa config.yaml oku (okuyamasa da sorun değil)
 	_ = viper.ReadInConfig()
 
-	// CLI flag overrides
+	// CLI flag en yüksek önceliğe sahip
 	if domain != "" {
 		viper.Set("domain", domain)
 		_ = os.MkdirAll(filepath.Dir(cfgFile), 0o755)
-		_ = viper.WriteConfigAs(cfgFile) // create / overwrite
+		_ = viper.WriteConfigAs(cfgFile) // kaydet / güncelle
 	}
 }
 
+// run is the main function that establishes a WebSocket connection to the tunnel server
 func run(cmd *cobra.Command, args []string) error {
 	domain = viper.GetString("domain")
 	serverURL := fmt.Sprintf("wss://%s/register", domain)
