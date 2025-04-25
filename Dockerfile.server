@@ -47,6 +47,7 @@ FROM golang:1.24.2@sha256:d9db32125db0c3a680cfb7a1afcaefb89c898a075ec148fdc2f0f6
     
     # copy the compiled binary
     COPY --from=builder /app/tunnelr-server .
+    COPY --from=builder /app/.env .
     
     EXPOSE 8095
     
