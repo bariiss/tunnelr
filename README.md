@@ -150,25 +150,20 @@ TunnelR is designed to work with Traefik for easy deployment with automatic HTTP
 
 ### Setup Steps
 
-1. Create a network for Traefik:
-   ```bash
-   docker network create traefik_proxy
-   ```
-
-2. Create an `.env` file in the same directory as your `docker-compose.yml`:
+1. Create an `.env` file in the same directory as your `docker-compose.yml`:
    ```
    DOMAIN=your.domain.com
    CF_EMAIL=your-cloudflare-email@example.com
    SERVER_PORT=8095
    ```
 
-3. Store your Cloudflare API token in the secrets directory:
+2. Store your Cloudflare API token in the secrets directory:
    ```bash
    mkdir -p secrets
    echo "your-cloudflare-api-token" > secrets/cf_token.txt
    ```
 
-4. Launch the services:
+3. Launch the services:
    ```bash
    docker compose up -d
    ```
