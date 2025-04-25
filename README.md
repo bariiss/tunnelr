@@ -120,18 +120,21 @@ TunnelR is designed to work with Traefik for easy deployment with automatic HTTP
 services:
   traefik:
     image: traefik:v2.11
-    # SSL/TLS termination and routing configuration
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./letsencrypt:/letsencrypt
+    env_file: .env
     environment:
-      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+      - CF_EMAIL
+      - CF_DNS_API_TOKEN
+      - DOMAIN
   
   tunnelr-server:
     image: ghcr.io/bariiss/tunnelr-server:latest
+    env_file: .env
     environment:
-      - DOMAIN=<DOMAIN>
-      - SERVER_PORT=8095
+      - SERVER_PORT
+      - DOMAIN
     # Traefik labels for routing
 ```
 
@@ -140,10 +143,10 @@ To use the provided setup:
 1. Create a network for Traefik: `docker network create traefik_proxy`
 2. Create a `.env` file with your Cloudflare credentials:
    ```
-   CF_DNS_API_TOKEN=your_cloudflare_api_token
-   DOMAIN=your.domain.com
-   EMAIL=your@email.com
-   SERVER_PORT=8095
+    CF_EMAIL=me@example.com
+    CF_DNS_API_TOKEN=abcdef0123456789abcdef0123456789
+    DOMAIN=example.com
+    SERVER_PORT=8095
    ```
 3. Run `docker compose up -d`
 
