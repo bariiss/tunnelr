@@ -20,6 +20,7 @@ type Forwarder struct {
 }
 
 // NewForwarder creates a new forwarder instance that handles WebSocket communication with the tunnel server
+// and forwards HTTP requests to the local server.
 func NewForwarder(c *websocket.Conn, localAddr string) *Forwarder {
 	return &Forwarder{
 		conn:      c,
@@ -31,6 +32,7 @@ func NewForwarder(c *websocket.Conn, localAddr string) *Forwarder {
 }
 
 // Serve starts the forwarding service, continuously reading WebSocket messages from the server
+// and forwarding them to the local server
 func (f *Forwarder) Serve(ctx context.Context) error {
 	for {
 		_, data, err := f.conn.Read(ctx)
