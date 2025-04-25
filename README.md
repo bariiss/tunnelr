@@ -44,16 +44,16 @@ go build -o tunnelr-server ./cmd/server
 
 ```bash
 # Using the pre-built client with default settings
-tunnelr
+tunnelr -d <DOMAIN>
 
 # With a custom subdomain (as positional argument)
-tunnelr myapp
+tunnelr -d <DOMAIN> myapp
 
 # Specify a different local port
-tunnelr -p 3000 myapp
+tunnelr -d <DOMAIN> -p 3000 myapp
 
 # Forward to a different local address
-tunnelr -t 192.168.1.100 -p 3000 myapp
+tunnelr -d <DOMAIN> -t 192.168.1.100 -p 3000 myapp
 
 # Specify a different tunnel server domain
 tunnelr -d <DOMAIN> myapp
