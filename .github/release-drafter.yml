@@ -1,3 +1,5 @@
+_extends: false
+
 name-template:  'v$RESOLVED_VERSION'
 tag-template:   'v$RESOLVED_VERSION'
 
