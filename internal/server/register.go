@@ -9,7 +9,7 @@ import (
 )
 
 // RegisterHandler handles WebSocket connections for registering subdomains and establishing tunnels
-func RegisterHandler(reg *Registry, baseDomain string) http.HandlerFunc {
+func RegisterHandler(reg *Registry, domain string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 			InsecureSkipVerify: true,
@@ -30,7 +30,7 @@ func RegisterHandler(reg *Registry, baseDomain string) http.HandlerFunc {
 		}
 
 		reg.Put(sub, &ConnEntry{Conn: conn})
-		fullHost := fmt.Sprintf("%s.%s", sub, baseDomain)
+		fullHost := fmt.Sprintf("%s.%s", sub, domain)
 		log.Printf("✅ tunnel registered: https://%s ↔︎ client", fullHost)
 
 		if err := conn.Write(r.Context(), websocket.MessageText, []byte(fullHost)); err != nil {

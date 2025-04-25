@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/bariiss/tunnelr/internal/server"
-	"github.com/joho/godotenv" // + ekle
+	"github.com/joho/godotenv"
 )
 
 func main() {

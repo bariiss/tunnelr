@@ -10,35 +10,35 @@ services:
     env_file: .env
     environment:
       - CF_EMAIL
-      - CF_DNS_API_TOKEN
       - DOMAIN
+    secrets:
+      - cf_token
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./letsencrypt:/letsencrypt
     networks:
-      traefik_proxy:
+      - traefik_proxy
+    entrypoint: ["/bin/sh", "-c",
+      "export CF_DNS_API_TOKEN=$(cat /run/secrets/cf_token) && \
+       traefik $$@",
+      "--" ]
+
     command:
-      # Dashboard & providers
+      # (aynı command listesi, kısaltıldı)
       - --api.dashboard=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-
-      # Entrypoints
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
-
       - --entrypoints.websecure.http.tls=true
       - --entrypoints.websecure.http.tls.certresolver=cloudflare
       - --entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}
       - --entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}
-
-      # ACME (Cloudflare DNS-01)
       - --certificatesresolvers.cloudflare.acme.dnschallenge=true
       - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
       - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53
-      - --certificatesresolvers.cloudflare.acme.email=${EMAIL}
+      - --certificatesresolvers.cloudflare.acme.email=${CF_EMAIL}
       - --certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme.json
-
       - --log.level=INFO
     labels:
       traefik.enable: "true"
@@ -48,27 +48,20 @@ services:
     container_name: tunnelr-server
     restart: always
     pull_policy: always
-    depends_on:
-      - traefik
-    expose:
-      - ${SERVER_PORT}
-    networks:
-      traefik_proxy:
+    depends_on: [traefik]
+    expose: [ "${SERVER_PORT}" ]
     env_file: .env
     environment:
       - SERVER_PORT
       - DOMAIN
+    networks: [ traefik_proxy ]
     labels:
       traefik.enable: "true"
       traefik.http.services.tunnelr.loadbalancer.server.port: ${SERVER_PORT}
-
-      # root router
       traefik.http.routers.tunnelr.rule: Host(`${DOMAIN}`)
       traefik.http.routers.tunnelr.entrypoints: websecure
       traefik.http.routers.tunnelr.tls.certresolver: cloudflare
       traefik.http.routers.tunnelr.service: tunnelr
-
-      # wildcard / sub-domain router
       traefik.http.routers.tunnelr-sub.rule: HostRegexp(`{subdomain:[a-z0-9]+}.${DOMAIN}`)
       traefik.http.routers.tunnelr-sub.entrypoints: websecure
       traefik.http.routers.tunnelr-sub.tls.certresolver: cloudflare
@@ -78,5 +71,8 @@ services:
 
 networks:
   traefik_proxy:
-    external: true
     name: traefik_proxy
+
+secrets:
+  cf_token:
+    file: ./secrets/cf_token.txt
