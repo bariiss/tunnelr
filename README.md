@@ -56,7 +56,7 @@ tunnelr -p 3000 myapp
 tunnelr -t 192.168.1.100 -p 3000 myapp
 
 # Specify a different tunnel server domain
-tunnelr -d custom.domain.com myapp
+tunnelr -d <DOMAIN> myapp
 ```
 
 Your local server will be accessible at `https://<subdomain>.<DOMAIN>` where `<subdomain>` is either your chosen subdomain or a randomly assigned one.
