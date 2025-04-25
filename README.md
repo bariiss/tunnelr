@@ -12,6 +12,10 @@
 
 TunnelR creates a secure tunnel to expose your local web servers to the internet through randomly generated or custom subdomains. Perfect for sharing work-in-progress features, testing webhooks, or demonstrating applications without deploying to production.
 
+Built with Go, this minimal solution provides secure, efficient tunneling with Docker integration and Let's Encrypt certificate automation through Cloudflare DNS. The client preserves your configuration choices and makes connecting to your tunnel as simple as a single command.
+
+With support for subdomain customization, secure WebSocket transport, and Docker secrets for credential management, TunnelR offers a complete solution for exposing local services with minimal setup overhead.
+
 ## Features
 
 - 🚀 **Lightweight & Fast**: Minimal code footprint with efficient implementation
