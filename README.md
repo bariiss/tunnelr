@@ -109,6 +109,7 @@ TunnelR uses a simple JSON-based message protocol for communication between the 
 |----------|-------------|---------|
 | `DOMAIN` | Base domain for tunnel URLs | Your configured domain |
 | `SERVER_PORT` | Port to listen on | `8095` |
+| `CF_EMAIL` | Cloudflare account email | Required for SSL |
 
 ### Client Configuration
 
@@ -141,38 +142,100 @@ domain: your.domain.com
 
 ## Docker Deployment
 
-TunnelR is designed to work with Traefik for easy deployment with automatic HTTPS. The included `docker-compose.yml` provides a complete setup:
+TunnelR is designed to work with Traefik for easy deployment with automatic HTTPS. The included `docker-compose.yml` provides a complete setup with Docker secrets for secure credential management.
+
+### Setup Steps
+
+1. Create a network for Traefik:
+   ```bash
+   docker network create traefik_proxy
+   ```
+
+2. Create an `.env` file in the same directory as your `docker-compose.yml`:
+   ```
+   DOMAIN=your.domain.com
+   CF_EMAIL=your-cloudflare-email@example.com
+   SERVER_PORT=8095
+   ```
+
+3. Store your Cloudflare API token in the secrets directory:
+   ```bash
+   mkdir -p secrets
+   echo "your-cloudflare-api-token" > secrets/cf_token.txt
+   ```
+
+4. Launch the services:
+   ```bash
+   docker compose up -d
+   ```
+
+### Docker Compose Configuration
+
+The `docker-compose.yml` file contains:
 
 ```yaml
 services:
   traefik:
     image: traefik:v2.11
-    # SSL/TLS termination and routing configuration
+    container_name: traefik
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    env_file: .env
+    environment:
+      - CF_EMAIL
+      - DOMAIN
+    secrets:
+      - cf_token
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./letsencrypt:/letsencrypt
-    environment:
-      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+    networks:
+      - traefik_proxy
+    entrypoint: ["/bin/sh", "-c",
+      "export CF_DNS_API_TOKEN=$(cat /run/secrets/cf_token) && \
+       traefik $$@",
+      "--" ]
+    command:
+      # Traefik configuration for SSL/TLS
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --entrypoints.websecure.http.tls=true
+      - --entrypoints.websecure.http.tls.certresolver=cloudflare
+      - --entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}
+      - --certificatesresolvers.cloudflare.acme.dnschallenge=true
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+      # Additional configuration omitted for brevity
   
   tunnelr-server:
     image: ghcr.io/bariiss/tunnelr-server:latest
+    container_name: tunnelr-server
+    restart: always
+    depends_on: [traefik]
+    expose: [ "${SERVER_PORT}" ]
+    env_file: .env
     environment:
-      - DOMAIN=<DOMAIN>
-      - SERVER_PORT=8095
-    # Traefik labels for routing
+      - SERVER_PORT
+      - DOMAIN
+    networks: [ traefik_proxy ]
+    labels:
+      # Traefik routing configuration
+      traefik.enable: "true"
+      traefik.http.services.tunnelr.loadbalancer.server.port: ${SERVER_PORT}
+      traefik.http.routers.tunnelr.rule: Host(`${DOMAIN}`)
+      traefik.http.routers.tunnelr-sub.rule: HostRegexp(`{subdomain:[a-z0-9]+}.${DOMAIN}`)
+      # Additional labels omitted for brevity
+
+networks:
+  traefik_proxy:
+    name: traefik_proxy
+
+secrets:
+  cf_token:
+    file: ./secrets/cf_token.txt
 ```
-
-To use the provided setup:
-
-1. Create a network for Traefik: `docker network create traefik_proxy`
-2. Create a `.env` file with your Cloudflare credentials:
-   ```
-   CF_DNS_API_TOKEN=your_cloudflare_api_token
-   DOMAIN=your.domain.com
-   EMAIL=your@email.com
-   SERVER_PORT=8095
-   ```
-3. Run `docker compose up -d`
 
 ## DNS Configuration
 
@@ -181,7 +244,7 @@ For TunnelR to work properly, you'll need to configure your DNS settings with Cl
 1. Add an A record for `<DOMAIN>` pointing to your server's IP address
 2. Add a wildcard A record for `*.<DOMAIN>` also pointing to the same server IP address
 
-> **Important**: Your domain must be managed through Cloudflare to use this setup. The DNS-01 challenge method used for obtaining wildcard SSL certificates requires DNS provider API access, which this configuration implements using Cloudflare. Without Cloudflare DNS management, you won't be able to automatically obtain wildcard certificates with Let's Encrypt.
+> **Important**: Your domain must be managed through Cloudflare to use this setup. The DNS-01 challenge method used for obtaining wildcard certificates requires DNS provider API access, which this configuration implements using Cloudflare.
 
 ### Setting Up Cloudflare API Token
 
@@ -196,15 +259,30 @@ For automated SSL certificate management, you'll need a Cloudflare API token:
      - Zone > DNS > Edit
      - Zone > Zone > Read
 5. Restrict the token to the specific zone (domain) you're using
-6. Add the token to your `.env` file
+6. Copy the token and save it to `secrets/cf_token.txt`
+
+### Security Note
+
+The Cloudflare API token is stored as a Docker secret, which is more secure than environment variables because:
+- It's mounted as a file in the container instead of being part of the environment
+- It's not exposed in Docker inspect commands
+- It's not logged in container logs
 
 ## Customizing for Your Own Domain
 
 The code and Docker Compose configuration are designed to be easily adaptable for your own domain:
 
-1. Replace `<DOMAIN>` with your own domain in the `.env` file
-2. Update your DNS provider with appropriate A records for your domain and wildcard subdomains
-3. Update the Cloudflare API token and email in the `.env` file
+1. Update the `.env` file with your domain and email:
+   ```
+   DOMAIN=your.domain.com
+   CF_EMAIL=your-email@example.com
+   SERVER_PORT=8095
+   ```
+
+2. Update your Cloudflare API token in `secrets/cf_token.txt`
+
+3. Update your DNS records in Cloudflare as described above
+
 4. Update client configuration:
    ```bash
    tunnelr -d your.domain.com
