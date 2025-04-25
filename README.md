@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/go-%231.24.2-blue" alt="Go version">
-  <img src="https://img.shields.io/badge/version-v0.2.1-orange" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.3.5-orange" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
 
@@ -44,16 +44,16 @@ go build -o tunnelr-server ./cmd/server
 
 ```bash
 # Using the pre-built client with default settings
-tunnelr -d <DOMAIN>
+tunnelr
 
 # With a custom subdomain (as positional argument)
-tunnelr -d <DOMAIN> myapp
+tunnelr myapp
 
 # Specify a different local port
-tunnelr -d <DOMAIN> -p 3000 myapp
+tunnelr -p 3000 myapp
 
 # Forward to a different local address
-tunnelr -d <DOMAIN> -t 192.168.1.100 -p 3000 myapp
+tunnelr -t 192.168.1.100 -p 3000 myapp
 
 # Specify a different tunnel server domain
 tunnelr -d <DOMAIN> myapp
@@ -141,7 +141,7 @@ tunnelr [flags] [subdomain]
 The client saves your domain preference to the config file. Example `config.yaml`:
 
 ```yaml
-domain: your.domain.com
+domain: <DOMAIN>
 ```
 
 ## Docker Deployment
@@ -150,16 +150,21 @@ TunnelR is designed to work with Traefik for easy deployment with automatic HTTP
 
 ### Setup Steps
 
-1. Create an `.env` file in the same directory as your `docker-compose.yml`:
+1. Create a network for Traefik (if not already created):
+   ```bash
+   docker network create traefik_proxy
    ```
+
+2. Configure your environment variables and Cloudflare token:
+   ```bash
+   # Update .env file with your domain and Cloudflare email
+   cat > .env << EOL
    DOMAIN=your.domain.com
    CF_EMAIL=your-cloudflare-email@example.com
    SERVER_PORT=8095
-   ```
+   EOL
 
-2. Store your Cloudflare API token in the secrets directory:
-   ```bash
-   mkdir -p secrets
+   # Update your Cloudflare API token
    echo "your-cloudflare-api-token" > secrets/cf_token.txt
    ```
 
@@ -236,14 +241,16 @@ secrets:
     file: ./secrets/cf_token.txt
 ```
 
-## DNS Configuration
+## DNS Configuration and Cloudflare Setup
+
+### DNS Records
 
 For TunnelR to work properly, you'll need to configure your DNS settings with Cloudflare:
 
 1. Add an A record for `<DOMAIN>` pointing to your server's IP address
 2. Add a wildcard A record for `*.<DOMAIN>` also pointing to the same server IP address
 
-> **Important**: Your domain must be managed through Cloudflare to use this setup. The DNS-01 challenge method used for obtaining wildcard certificates requires DNS provider API access, which this configuration implements using Cloudflare.
+> **Important**: Your domain must be managed through Cloudflare to use this setup. The DNS-01 challenge method used for obtaining wildcard certificates requires DNS provider API access.
 
 ### Setting Up Cloudflare API Token
 
@@ -266,26 +273,6 @@ The Cloudflare API token is stored as a Docker secret, which is more secure than
 - It's mounted as a file in the container instead of being part of the environment
 - It's not exposed in Docker inspect commands
 - It's not logged in container logs
-
-## Customizing for Your Own Domain
-
-The code and Docker Compose configuration are designed to be easily adaptable for your own domain:
-
-1. Update the `.env` file with your domain and email:
-   ```
-   DOMAIN=your.domain.com
-   CF_EMAIL=your-email@example.com
-   SERVER_PORT=8095
-   ```
-
-2. Update your Cloudflare API token in `secrets/cf_token.txt`
-
-3. Update your DNS records in Cloudflare as described above
-
-4. Update client configuration:
-   ```bash
-   tunnelr -d your.domain.com
-   ```
 
 ## Available Client Binaries
 
