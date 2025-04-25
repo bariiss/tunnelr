@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PLATFORMS: linux/amd64
+  PLATFORMS: linux/amd64,linux/arm64
 
 jobs:
   build-and-push:
@@ -54,7 +54,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          IMAGE_NAME="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          IMAGE_NAME="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-server"
 
           BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 

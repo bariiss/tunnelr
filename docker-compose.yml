@@ -4,11 +4,16 @@ services:
     container_name: traefik
     restart: always
     pull_policy: always
-
     ports:
-      - "80:80"
-      - "443:443"
-
+      - 80:80
+      - 443:443
+    environment:
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt:/letsencrypt
+    networks:
+      traefik_proxy:
     command:
       # Dashboard & providers
       - --api.dashboard=true
@@ -21,70 +26,51 @@ services:
 
       - --entrypoints.websecure.http.tls=true
       - --entrypoints.websecure.http.tls.certresolver=cloudflare
-      - --entrypoints.websecure.http.tls.domains[0].main=link.il1.nl
-      - --entrypoints.websecure.http.tls.domains[0].sans=*.link.il1.nl
+      - --entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}
 
-      # ACME (Cloudflare DNS‑01)
+      # ACME (Cloudflare DNS-01)
       - --certificatesresolvers.cloudflare.acme.dnschallenge=true
       - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
       - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53
-      - --certificatesresolvers.cloudflare.acme.email=<YOUR_EMAIL>
+      - --certificatesresolvers.cloudflare.acme.email=${EMAIL}
       - --certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme.json
 
       - --log.level=INFO
-
-    environment:
-      CF_DNS_API_TOKEN: <YOUR_CLOUDFLARE_API_TOKEN>
-
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./letsencrypt:/letsencrypt
-
-    networks:
-      - traefik_proxy
-
     labels:
       traefik.enable: "true"
-      traefik.http.routers.mydashboard.rule: "Host(`traefik.vultr.llll.ist`)"
-      traefik.http.routers.mydashboard.entrypoints: "websecure"
-      traefik.http.routers.mydashboard.service: "api@internal"
-      traefik.http.routers.mydashboard.tls: "true"
-      traefik.http.routers.mydashboard.middlewares: "myauth"
-      traefik.http.middlewares.myauth.basicauth.users: "test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
 
-  tunnelr:
-    image: ghcr.io/bariiss/tunnelr:latest
-    container_name: tunnelr
+  tunnelr-server:
+    image: ghcr.io/bariiss/tunnelr-server:latest
+    container_name: tunnelr-server
     restart: always
     pull_policy: always
-    expose:
-      - "8095"
-    networks:
-      - traefik_proxy
-    environment:
-      - SERVER_PORT=8095
-      - BASE_DOMAIN=link.il1.nl
-
-    labels:
-      traefik.enable: "true"
-
-      traefik.http.services.tunnelr.loadbalancer.server.port: "8095"
-
-      traefik.http.routers.tunnelr.rule: "Host(`link.il1.nl`)"
-      traefik.http.routers.tunnelr.entrypoints: "websecure"
-      traefik.http.routers.tunnelr.tls.certresolver: "cloudflare"
-      traefik.http.routers.tunnelr.service: "tunnelr"
-
-      traefik.http.routers.tunnelr-sub.rule: "HostRegexp(`{subdomain:[a-z0-9]+}.link.il1.nl`)"
-      traefik.http.routers.tunnelr-sub.entrypoints: "websecure"
-      traefik.http.routers.tunnelr-sub.tls.certresolver: "cloudflare"
-      traefik.http.routers.tunnelr-sub.service: "tunnelr"
-      traefik.http.routers.tunnelr-sub.tls.domains[0].main: "link.il1.nl"
-      traefik.http.routers.tunnelr-sub.tls.domains[0].sans: "*.link.il1.nl"
-
-      com.centurylinklabs.watchtower.enable: "true"
     depends_on:
       - traefik
+    expose:
+      - ${SERVER_PORT}
+    networks:
+      traefik_proxy:
+    environment:
+      SERVER_PORT: ${SERVER_PORT}
+      BASE_DOMAIN: ${DOMAIN}
+    labels:
+      traefik.enable: "true"
+      traefik.http.services.tunnelr.loadbalancer.server.port: ${SERVER_PORT}
+
+      # root router
+      traefik.http.routers.tunnelr.rule: Host(`${DOMAIN}`)
+      traefik.http.routers.tunnelr.entrypoints: websecure
+      traefik.http.routers.tunnelr.tls.certresolver: cloudflare
+      traefik.http.routers.tunnelr.service: tunnelr
+
+      # wildcard / sub-domain router
+      traefik.http.routers.tunnelr-sub.rule: HostRegexp(`{subdomain:[a-z0-9]+}.${DOMAIN}`)
+      traefik.http.routers.tunnelr-sub.entrypoints: websecure
+      traefik.http.routers.tunnelr-sub.tls.certresolver: cloudflare
+      traefik.http.routers.tunnelr-sub.service: tunnelr
+      traefik.http.routers.tunnelr-sub.tls.domains[0].main: ${DOMAIN}
+      traefik.http.routers.tunnelr-sub.tls.domains[0].sans: "*.${DOMAIN}"
 
 networks:
   traefik_proxy:
