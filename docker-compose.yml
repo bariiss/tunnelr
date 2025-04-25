@@ -7,8 +7,11 @@ services:
     ports:
       - 80:80
       - 443:443
+    env_file: .env
     environment:
-      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+      - CF_DNS_API_TOKEN
+      - DOMAIN
+      - EMAIL
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./letsencrypt:/letsencrypt
@@ -51,9 +54,10 @@ services:
       - ${SERVER_PORT}
     networks:
       traefik_proxy:
+    env_file: .env
     environment:
-      SERVER_PORT: ${SERVER_PORT}
-      BASE_DOMAIN: ${DOMAIN}
+      - SERVER_PORT
+      - DOMAIN
     labels:
       traefik.enable: "true"
       traefik.http.services.tunnelr.loadbalancer.server.port: ${SERVER_PORT}

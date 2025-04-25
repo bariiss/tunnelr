@@ -39,16 +39,16 @@ go build -o tunnelr-server ./cmd/server
 
 ```bash
 # Using the pre-built client
-go run ./cmd/client/tunnelr -port 8080 -server wss://link.il1.nl/register
+go run ./cmd/client/tunnelr -port 8080 -server wss://<DOMAIN>/register
 
 # With a custom subdomain
-go run ./cmd/client/tunnelr -port 8080 -server wss://link.il1.nl/register -sub myapp
+go run ./cmd/client/tunnelr -port 8080 -server wss://<DOMAIN>/register -sub myapp
 
 # Download and use a pre-built binary from the releases page
-./tunnelr-darwin-arm64 -port 3000 -server wss://link.il1.nl/register -sub myapp
+./tunnelr-darwin-arm64 -port 3000 -server wss://<DOMAIN>/register -sub myapp
 ```
 
-Your local server will be accessible at `https://<subdomain>.link.il1.nl` where `<subdomain>` is either your chosen subdomain or a randomly assigned one.
+Your local server will be accessible at `https://<subdomain>.<DOMAIN>` where `<subdomain>` is either your chosen subdomain or a randomly assigned one.
 
 ## How It Works
 
@@ -100,7 +100,7 @@ TunnelR uses a simple JSON-based message protocol for communication between the 
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `BASE_DOMAIN` | Base domain for tunnel URLs | `link.il1.nl` |
+| `DOMAIN` | Base domain for tunnel URLs | Your configured domain |
 | `SERVER_PORT` | Port to listen on | `8095` |
 
 ### Client Arguments
@@ -108,8 +108,9 @@ TunnelR uses a simple JSON-based message protocol for communication between the 
 | Flag | Description | Default |
 |------|-------------|---------|
 | `-port` | Local port to forward traffic to | `8080` |
-| `-server` | Tunnel server WebSocket URL | `wss://link.il1.nl/register` |
+| `-server` | Tunnel server WebSocket URL | `wss://<DOMAIN>/register` |
 | `-sub` | Custom subdomain (optional) | Random string |
+| `-target` | Local host to forward to | `127.0.0.1` |
 
 ## Docker Deployment
 
@@ -129,7 +130,7 @@ services:
   tunnelr-server:
     image: ghcr.io/bariiss/tunnelr-server:latest
     environment:
-      - BASE_DOMAIN=link.il1.nl
+      - DOMAIN=<DOMAIN>
       - SERVER_PORT=8095
     # Traefik labels for routing
 ```
@@ -150,8 +151,8 @@ To use the provided setup:
 
 For TunnelR to work properly, you'll need to configure your DNS settings with Cloudflare:
 
-1. Add an A record for `link.il1.nl` pointing to your server's IP address
-2. Add a wildcard A record for `*.link.il1.nl` also pointing to the same server IP address
+1. Add an A record for `<DOMAIN>` pointing to your server's IP address
+2. Add a wildcard A record for `*.<DOMAIN>` also pointing to the same server IP address
 
 > **Important**: Your domain must be managed through Cloudflare to use this setup. The DNS-01 challenge method used for obtaining wildcard SSL certificates requires DNS provider API access, which this configuration implements using Cloudflare. Without Cloudflare DNS management, you won't be able to automatically obtain wildcard certificates with Let's Encrypt.
 
@@ -174,7 +175,7 @@ For automated SSL certificate management, you'll need a Cloudflare API token:
 
 The code and Docker Compose configuration are designed to be easily adaptable for your own domain:
 
-1. Replace all instances of `link.il1.nl` with your own domain in the configuration files
+1. Replace `<DOMAIN>` with your own domain in the `.env` file
 2. Update your DNS provider with appropriate A records for your domain and wildcard subdomains
 3. Update the Cloudflare API token and email in the `.env` file
 
