@@ -24,7 +24,6 @@ services:
       "--" ]
 
     command:
-      # (aynı command listesi, kısaltıldı)
       - --api.dashboard=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
